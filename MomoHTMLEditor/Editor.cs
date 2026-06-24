@@ -37,7 +37,7 @@ namespace MomoHTMLEditor
                 Console.WriteLine("[ESC] Menu [TAB] Sender/Message [ALT]+[UP/DOWN] Move Message [ALT]+[LEFT/RIGHT] Change Message Type");
                 Console.WriteLine("Type normally to enter text");
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Index {MessagesIndex + 1} | {fileName}");
+                Console.WriteLine($"Index {MessagesIndex + 1} | " + (string.IsNullOrEmpty(fileName) ? "No File" : fileName));
 
                 // does a switch work here?
                 if (MsgType == MessageType.Received) {
