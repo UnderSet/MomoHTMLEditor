@@ -86,6 +86,3 @@ while (currentState != runStates.Exit)
             break;
     }
 }
-
-Console.WriteLine("i'm barely fucking putting the menu together chill the hell out");
-Console.ReadKey(true); // quite literally just stall so we can see our shit happen
