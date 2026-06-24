@@ -44,10 +44,10 @@ while (currentState != runStates.Exit)
             {
                 switch (selMenuInd)
                 {
-                    case 0:
+                    case 0: // Open Editor (translation: close the menu)
                         editor.Engine();
                         break;
-                    case 7:
+                    case 7: // Exit
                         currentState = runStates.Exit;
                         break;
                 }
