@@ -34,7 +34,7 @@ namespace MomoHTMLEditor
                 int peekLines = 0;
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("[ESC] Menu [TAB] Sender/Message [ALT]+[UP/DOWN] Move Message");
+                Console.WriteLine("[ESC] Menu [TAB] Sender/Message [ALT]+[UP/DOWN] Move Message [ALT]+[LEFT/RIGHT] Change Message Type");
                 Console.WriteLine("Type normally to enter text");
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"Index {MessagesIndex + 1} | {fileName}");
