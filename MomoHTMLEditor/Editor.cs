@@ -7,7 +7,7 @@ namespace MomoHTMLEditor
     public enum MessageType { Received, Sent, System }
     public class Editor
     {
-        private string? fileName; // handle this being NULL...OR ELSE
+        public string? fileName; // handle this being NULL...OR ELSE
         private List<Message> MessagesBuffer = new List<Message>();
         public void Engine()
         {

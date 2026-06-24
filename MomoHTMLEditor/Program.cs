@@ -1,9 +1,12 @@
 ﻿using MomoHTMLEditor;
+using System.Reflection;
 
 Console.Title = "MomoHTML Tool";
 
 int selMenuInd = 0;
 string[] options = { "Open Editor", "New File", "Open File", "Convert Current File", "Save File", "Save File As", "Settings", "Exit" };
+var buildDate = Assembly.GetExecutingAssembly()?.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "BuildDate")?.Value;
+var version = Assembly.GetExecutingAssembly()?.GetName().Version;
 
 runStates currentState = runStates.Menu;
 
@@ -14,7 +17,14 @@ while (currentState != runStates.Exit)
     switch (currentState)
     {
         case runStates.Menu:
+            string fileName = string.IsNullOrEmpty(editor.fileName) ? "No file" : editor.fileName;
             Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"MomoHTML Tools v{version}");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write($" | Compiled {buildDate}{Environment.NewLine}");
+            Console.ResetColor();
+            Console.WriteLine($"Current file: {fileName}");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == selMenuInd)
@@ -46,6 +56,10 @@ while (currentState != runStates.Exit)
                 {
                     case 0: // Open Editor (translation: close the menu)
                         editor.Engine();
+                        break;
+                    case 1:
+                        editor = new Editor();
+                        selMenuInd = 0; // for buttons such as Open File/New File, jump to Open Editor after it finished
                         break;
                     case 7: // Exit
                         currentState = runStates.Exit;
