@@ -7,6 +7,8 @@ string[] options = { "Open Editor", "New File", "Open File", "Convert Current Fi
 
 runStates currentState = runStates.Menu;
 
+Editor editor = new Editor(); //cursed C# things; also, see Editor.cs for the ACTUAL editing code
+
 while (currentState != runStates.Exit)
 {
     switch (currentState)
@@ -42,13 +44,17 @@ while (currentState != runStates.Exit)
             {
                 switch (selMenuInd)
                 {
+                    case 0:
+                        editor.Engine();
+                        break;
                     case 7:
                         currentState = runStates.Exit;
                         break;
                 }
             }
             break;
-        default: //editor code is executed from here idk
+        default:
+            editor.Engine();
             break;
     }
 }
