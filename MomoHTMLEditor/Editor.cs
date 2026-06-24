@@ -120,6 +120,10 @@ namespace MomoHTMLEditor
                         messageBuffer = "";
                     }
                 }
+                else if (keyInfo.Key == ConsoleKey.Delete && MessagesIndex < MessagesBuffer.Count) {
+                    MessagesBuffer.RemoveAt(MessagesIndex);
+                    CorrectPointer();
+                }
                 else if (keyInfo.Key == ConsoleKey.Escape) {
                     break;
                 }
