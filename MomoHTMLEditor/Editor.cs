@@ -90,7 +90,7 @@ namespace MomoHTMLEditor
                     }
                     else if (MessagesIndex + peekLines == MessagesBuffer.Count) {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine("[New Message...]");
+                        Console.WriteLine("[Move Down to Create New Message...]");
                         freeLines = 0;
                     }
                     else {
