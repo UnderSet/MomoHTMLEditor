@@ -34,7 +34,13 @@ while (runState == 1)
     }
     else if (keyInfo.Key == ConsoleKey.Enter)
     {
-        break; // Selection made!
+        switch (selMenuInd)
+        {
+            case 7:
+                runState = 0;
+                Console.Write("k bye");
+                break;
+        }
     }
 }
 
