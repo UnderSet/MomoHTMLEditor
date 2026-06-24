@@ -61,6 +61,9 @@ while (currentState != runStates.Exit)
                         editor = new Editor();
                         selMenuInd = 0; // for buttons such as Open File/New File, jump to Open Editor after it finished
                         break;
+                    case 2:
+                        editor.Load();
+                        break;
                     case 4:
                         if (!string.IsNullOrEmpty(editor.fileName)) {
                             editor.Save();

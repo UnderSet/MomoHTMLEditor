@@ -180,14 +180,47 @@ namespace MomoHTMLEditor
         }
 
         internal void SaveAs() {
-            Console.WriteLine($"{Environment.NewLine}Type a filename or file path:");
-            string TempFileName = Console.ReadLine();
+            Console.WriteLine($"{Environment.NewLine}Type a filename or file path (leave empty to cancel):");
+            string TempFileName = Console.ReadLine() ?? "";
+
+            if (TempFileName != "") {
+                try {
+                    string MessagesJSON = JsonSerializer.Serialize(MessagesBuffer, AppJsonContext.Default.ListMessage);
+                    File.WriteAllText(TempFileName, MessagesJSON);
+
+                    Console.WriteLine("File saved successfully.");
+                    fileName = TempFileName;
+                }
+                catch (UnauthorizedAccessException) {
+                    Console.WriteLine("Permission denied: Cannot write here.");
+                }
+                catch (System.Text.Json.JsonException ex) {
+                    Console.WriteLine($"JSON conversion failed: {ex.Message}");
+                }
+                catch (IOException ex) {
+                    Console.WriteLine($"I/O exception: {ex.Message}");
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+            }
+            else {
+                Console.WriteLine("Saving canceled.");
+            }
+
+            Console.WriteLine("Press any key to continue.");
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+        }
+
+        internal void Save() {
+            Console.WriteLine($"{Environment.NewLine}");
             try {
                 string MessagesJSON = JsonSerializer.Serialize(MessagesBuffer, AppJsonContext.Default.ListMessage);
-                File.WriteAllText(TempFileName, MessagesJSON);
+                // fileName*!* suppresses compiler warning; this is dealt with in logic by calling SaveAs() instead if
+                // there's no fileName (active file name)
+                File.WriteAllText(fileName!, MessagesJSON);
 
                 Console.WriteLine("File saved successfully.");
-                fileName = TempFileName;
             }
             catch (UnauthorizedAccessException) {
                 Console.WriteLine("Permission denied: Cannot write here.");
@@ -206,29 +239,41 @@ namespace MomoHTMLEditor
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
         }
 
-        internal void Save() {
-            Console.WriteLine($"{Environment.NewLine}");
-            try {
-                string MessagesJSON = JsonSerializer.Serialize(MessagesBuffer, AppJsonContext.Default.ListMessage);
-                File.WriteAllText(fileName, MessagesJSON);
+        internal void Load() {
+            Console.WriteLine($"{Environment.NewLine}Type a filename or file path: (leave empty to cancel)");
+            string TempFileName = Console.ReadLine() ?? "";
 
-                Console.WriteLine("File saved successfully.");
+            if (TempFileName != "" && !File.Exists(TempFileName)) {
+                Console.WriteLine("File does not exist. Double check your entered path/filename.");
             }
-            catch (UnauthorizedAccessException) {
-                Console.WriteLine("Permission denied: Cannot write here.");
+            else if (TempFileName != "") {
+                try {
+                    string MessagesJSON = File.ReadAllText(TempFileName);
+                    MessagesBuffer = JsonSerializer.Deserialize(MessagesJSON, AppJsonContext.Default.ListMessage);
+
+                    Console.WriteLine("File loaded successfully.");
+                    fileName = TempFileName;
+                }
+                catch (UnauthorizedAccessException) {
+                    Console.WriteLine("Permission denied: Cannot read here.");
+                }
+                catch (System.Text.Json.JsonException ex) {
+                    Console.WriteLine($"JSON conversion failed: {ex.Message}");
+                }
+                catch (IOException ex) {
+                    Console.WriteLine($"I/O exception: {ex.Message}");
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
             }
-            catch (System.Text.Json.JsonException ex) {
-                Console.WriteLine($"JSON conversion failed: {ex.Message}");
-            }
-            catch (IOException ex) {
-                Console.WriteLine($"I/O exception: {ex.Message}");
-            }
-            catch (Exception ex) {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+            else {
+                Console.WriteLine("File load canceled.");
             }
 
             Console.WriteLine("Press any key to continue.");
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+
         }
 
         private void CorrectPointer() {
