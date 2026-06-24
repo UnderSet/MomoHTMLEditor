@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MomoHTMLEditor
@@ -177,6 +178,59 @@ namespace MomoHTMLEditor
                 }
             }
         }
+
+        internal void SaveAs() {
+            Console.WriteLine($"{Environment.NewLine}Type a filename or file path:");
+            string TempFileName = Console.ReadLine();
+            try {
+                string MessagesJSON = JsonSerializer.Serialize(MessagesBuffer, AppJsonContext.Default.ListMessage);
+                File.WriteAllText(TempFileName, MessagesJSON);
+
+                Console.WriteLine("File saved successfully.");
+                fileName = TempFileName;
+            }
+            catch (UnauthorizedAccessException) {
+                Console.WriteLine("Permission denied: Cannot write here.");
+            }
+            catch (System.Text.Json.JsonException ex) {
+                Console.WriteLine($"JSON conversion failed: {ex.Message}");
+            }
+            catch (IOException ex) {
+                Console.WriteLine($"I/O exception: {ex.Message}");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
+            Console.WriteLine("Press any key to continue.");
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+        }
+
+        internal void Save() {
+            Console.WriteLine($"{Environment.NewLine}");
+            try {
+                string MessagesJSON = JsonSerializer.Serialize(MessagesBuffer, AppJsonContext.Default.ListMessage);
+                File.WriteAllText(fileName, MessagesJSON);
+
+                Console.WriteLine("File saved successfully.");
+            }
+            catch (UnauthorizedAccessException) {
+                Console.WriteLine("Permission denied: Cannot write here.");
+            }
+            catch (System.Text.Json.JsonException ex) {
+                Console.WriteLine($"JSON conversion failed: {ex.Message}");
+            }
+            catch (IOException ex) {
+                Console.WriteLine($"I/O exception: {ex.Message}");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
+            Console.WriteLine("Press any key to continue.");
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+        }
+
         private void CorrectPointer() {
             MessagesIndex = Math.Clamp(MessagesIndex, 0, MessagesBuffer.Count);
         }
@@ -187,5 +241,10 @@ namespace MomoHTMLEditor
         public required string Sender { get; set; }
         public required string Text { get; set; }
         public MessageType Type { get; set; }
+    }
+
+    [JsonSerializable(typeof(Message))]
+    [JsonSerializable(typeof(List<Message>))]
+    public partial class AppJsonContext : JsonSerializerContext {
     }
 }
