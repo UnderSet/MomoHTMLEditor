@@ -62,6 +62,7 @@ while (currentState != runStates.Exit)
                         break;
                     case 2:
                         editor.Load();
+                        selMenuInd = 0;
                         break;
                     case 4:
                         if (!string.IsNullOrEmpty(editor.fileName)) {
@@ -70,9 +71,11 @@ while (currentState != runStates.Exit)
                         else {
                             editor.SaveAs();
                         }
+                        selMenuInd = 0;
                         break;
                     case 5:
                         editor.SaveAs();
+                        selMenuInd = 0;
                         break;
                     case 7: // Exit
                         currentState = runStates.Exit;
