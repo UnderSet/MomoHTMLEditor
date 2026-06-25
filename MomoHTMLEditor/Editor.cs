@@ -16,6 +16,7 @@ namespace MomoHTMLEditor
         private string messageBuffer = "";
         private bool activeSenderBuffer = false;
         private int MessagesIndex = 0;
+        private int TextCursorPos = 0;
         private MessageType MsgType = MessageType.Received;
         private string activeBuffer
         {
@@ -25,7 +26,8 @@ namespace MomoHTMLEditor
                 if (activeSenderBuffer) senderBuffer = value;
                 else messageBuffer = value;
             }
-        }
+        } // little method to easily get the actual active buffer and not duplicate lots of code
+                                       // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
         public void Engine()
         {
             while (true)
