@@ -164,19 +164,30 @@ namespace MomoHTMLEditor
                     //TextCursorPos = 0;
                 }
                 else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.DownArrow) {
-                    MessagesIndex += (keyInfo.Key == ConsoleKey.UpArrow ? -1 : 1);
-                    CorrectPointer();
-                    if (MessagesIndex < MessagesBuffer.Count) {
-                        senderBuffer = MessagesBuffer[MessagesIndex].Sender;
-                        messageBuffer = MessagesBuffer[MessagesIndex].Text;
-                        MsgType = MessagesBuffer[MessagesIndex].Type;
+                    if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Alt)) { 
+                        int TargetIndex = MessagesIndex + (keyInfo.Key == ConsoleKey.UpArrow ? -1 : 1);
+                        if (0 <= TargetIndex && TargetIndex < MessagesBuffer.Count) {
+                            Message MessageHolder = MessagesBuffer[TargetIndex];
+                            MessagesBuffer[TargetIndex] = MessagesBuffer[MessagesIndex];
+                            MessagesBuffer[MessagesIndex] = MessageHolder;
+                            MessagesIndex = TargetIndex;
+                        }
                     }
                     else {
-                        messageBuffer = "";
+                        MessagesIndex += (keyInfo.Key == ConsoleKey.UpArrow ? -1 : 1);
+                        CorrectPointer();
+                        if (MessagesIndex < MessagesBuffer.Count) {
+                            senderBuffer = MessagesBuffer[MessagesIndex].Sender;
+                            messageBuffer = MessagesBuffer[MessagesIndex].Text;
+                            MsgType = MessagesBuffer[MessagesIndex].Type;
+                        }
+                        else {
+                            messageBuffer = "";
+                        }
+                        if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
+                        MessageCursorPos = messageBuffer.Length; // Reset cursor position every time we switch
+                        SenderCursorPos = senderBuffer.Length;   // I. Know. What. I'm. Doing.
                     }
-                    if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
-                    MessageCursorPos = messageBuffer.Length; // Reset cursor position every time we switch
-                    SenderCursorPos = senderBuffer.Length;   // I. Know. What. I'm. Doing.
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow || keyInfo.Key == ConsoleKey.RightArrow) {
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Alt)) {
