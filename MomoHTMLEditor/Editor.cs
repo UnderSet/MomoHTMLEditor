@@ -124,8 +124,6 @@ namespace MomoHTMLEditor
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("[Creating New Message]");
                         freeLines = 0;
-                        // we need to do THIS or the program will softlock
-                        // (while freeLines > 1) - 1 is for the cursor line since we use Console.WriteLine
                     }
                 }
 
