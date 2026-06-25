@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -16,7 +17,8 @@ namespace MomoHTMLEditor
         private string messageBuffer = "";
         private bool activeSenderBuffer = false;
         private int MessagesIndex = 0;
-        private int TextCursorPos = 0;
+        private int MessageCursorPos = 0;
+        private int SenderCursorPos = 0;
         private MessageType MsgType = MessageType.Received;
         private string activeBuffer
         {
@@ -27,7 +29,15 @@ namespace MomoHTMLEditor
                 else messageBuffer = value;
             }
         } // little method to easily get the actual active buffer and not duplicate lots of code
-                                       // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
+          // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
+        private int TextCursorPos {
+            get => activeSenderBuffer ? SenderCursorPos : MessageCursorPos;
+            set {
+                if (activeSenderBuffer) SenderCursorPos = value;
+                else MessageCursorPos = value;
+            }
+        } // little method to easily get the actual active buffer and not duplicate lots of code
+
         public void Engine()
         {
             while (true)
@@ -42,11 +52,25 @@ namespace MomoHTMLEditor
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"Index {MessagesIndex + 1} | " + (string.IsNullOrEmpty(fileName) ? "No File" : fileName));
 
+                // Make ABSOLUTE, BLOODY SURE these are within valid values before attempting anything
+                // (lesson learnt in blood, and yes, I distrust my own code this much)
+                SenderCursorPos = Math.Clamp(SenderCursorPos, 0, senderBuffer.Length);
+                MessageCursorPos = Math.Clamp(MessageCursorPos, 0, messageBuffer.Length);
+
+                // probably don't need four spans here and could get away with 2 and just doing [..SenderCursorPos] inline (for example) but I'm mentally done
+                ReadOnlySpan<char> senderSpanLeft = senderBuffer.AsSpan()[..SenderCursorPos];
+                ReadOnlySpan<char> senderSpanRight = senderBuffer.AsSpan()[SenderCursorPos..];
+                ReadOnlySpan<char> messageSpanLeft = messageBuffer.AsSpan()[..MessageCursorPos];
+                ReadOnlySpan<char> messageSpanRight = messageBuffer.AsSpan()[MessageCursorPos..];
+
                 // does a switch work here?
                 if (MsgType == MessageType.Received) {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    string dispSendBuf = (MessagesIndex + 1) + " >R |" + senderBuffer + (activeSenderBuffer ? "_" : "");
-                    string dispMesgBuf = (MessagesIndex + 1) + " >  |" + messageBuffer + (activeSenderBuffer ? "" : "_");
+                    
+                    // "Why are you concatenating with + instead of inside the string.Concat?"
+                    // If you've got a better way to workaround the compiler error here, be my guest!
+                    string dispSendBuf = (MessagesIndex + 1) + string.Concat(" >R |", senderSpanLeft, (activeSenderBuffer ? "_" : ""), senderSpanRight);
+                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" >R |", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
                     freeLines = freeLines - (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width);
                     freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
                     Console.WriteLine(dispSendBuf);
@@ -54,13 +78,13 @@ namespace MomoHTMLEditor
                 }
                 else if (MsgType == MessageType.Sent ) {
                     Console.ForegroundColor = ConsoleColor.Cyan;
-                    string dispMesgBuf = (MessagesIndex + 1) + "  S<|" + messageBuffer + (activeSenderBuffer ? "" : "_");
+                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat("  S<|", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
                     freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
                     Console.WriteLine(dispMesgBuf);
                 }
                 else if (MsgType == MessageType.System) {
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    string dispMesgBuf = (MessagesIndex + 1) + " -N-|" + messageBuffer + (activeSenderBuffer ? "" : "_");
+                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" -N-|", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
                     freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
                     Console.WriteLine(dispMesgBuf);
                 }
@@ -137,6 +161,7 @@ namespace MomoHTMLEditor
                     else {
                         activeSenderBuffer = false;
                     }
+                    //TextCursorPos = 0;
                 }
                 else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.DownArrow) {
                     MessagesIndex += (keyInfo.Key == ConsoleKey.UpArrow ? -1 : 1);
@@ -146,7 +171,12 @@ namespace MomoHTMLEditor
                         messageBuffer = MessagesBuffer[MessagesIndex].Text;
                         MsgType = MessagesBuffer[MessagesIndex].Type;
                     }
+                    else {
+                        messageBuffer = "";
+                    }
                     if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
+                    MessageCursorPos = messageBuffer.Length; // Reset cursor position every time we switch
+                    SenderCursorPos = senderBuffer.Length;   // I. Know. What. I'm. Doing.
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow || keyInfo.Key == ConsoleKey.RightArrow) {
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Alt)) {
@@ -160,23 +190,36 @@ namespace MomoHTMLEditor
                         }
                         if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
                     }
+                    else {
+                        // INSANELY dangerous trick for cursor pos manipulation
+                        // You would not believe my face when I first did this shit
+                        TextCursorPos = Math.Clamp(TextCursorPos + (keyInfo.Key == ConsoleKey.LeftArrow ? -1 : 1), 0, activeBuffer.Length);
+                    }
                 }
                 else if (keyInfo.Key == ConsoleKey.Backspace) {
+                    // TODO: needs a rework after cursor feature add
+                    TextCursorPos = Math.Clamp(TextCursorPos, 0, activeBuffer.Length);
+                    ReadOnlySpan<char> bufferLeft = activeBuffer.AsSpan()[..TextCursorPos];
                     int delNumber = 1;
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control)) {
-                        activeBuffer = activeBuffer.TrimEnd();
-                        int lastSpace = activeBuffer.LastIndexOf(" ", Math.Max(0, activeBuffer.Length));
-                        delNumber = activeBuffer.Length - (lastSpace < 0 ? 0 : lastSpace + 1);
+                        bufferLeft = bufferLeft.TrimEnd();
+                        int lastSpace = bufferLeft.LastIndexOf(" ");
+                        delNumber = bufferLeft.Length - (lastSpace < 0 ? 0 : lastSpace);
                     }
-                    if (activeBuffer.Length >= delNumber) {
-                        activeBuffer = activeBuffer.Substring(0, activeBuffer.Length - delNumber);
+                    if (bufferLeft.Length >= delNumber) {
+                        // By some Christmas miracle, this DISASTER works, and I don't wanna think about it
+                        activeBuffer = string.Concat(bufferLeft[..(TextCursorPos - delNumber)], activeBuffer.AsSpan()[TextCursorPos..]);
+                        Console.WriteLine(bufferLeft);
+                        Console.WriteLine(string.Concat(bufferLeft[..(TextCursorPos - delNumber)], "!"));
                     }
+                    TextCursorPos = TextCursorPos - delNumber; // correct cursor position after deleting
                 }
                 else if (char.IsControl(keyInfo.KeyChar)) {
                     // quite literally do NOTHING if it's a control character and is NOT covered by the cases above
                 }
                 else {
-                    activeBuffer = activeBuffer.Insert(activeBuffer.Length, keyInfo.KeyChar.ToString());
+                    activeBuffer = activeBuffer.Insert(TextCursorPos, keyInfo.KeyChar.ToString());
+                    TextCursorPos += 1;
                 }
             }
         }
@@ -286,6 +329,10 @@ namespace MomoHTMLEditor
             MessagesIndex = Math.Clamp(MessagesIndex, 0, MessagesBuffer.Count);
         }
 
+        //private static (ReadOnlySpan<char> Left, ReadOnlySpan<char> Right) SplitBuffer(string text, int cursorPos) {
+        //    ReadOnlySpan<char> span = text.AsSpan();
+        //    return (span[..cursorPos], span[cursorPos..]);
+        //}
     }
     public class Message
     {
