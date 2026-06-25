@@ -31,11 +31,10 @@ while (currentState != runStates.Exit)
                 {
                     Console.ForegroundColor = ConsoleColor.Blue;
                     Console.WriteLine($"> {options[i]}");
-                    Console.ResetColor();
                 }
                 else
                 {
-                    //Console.ForegroundColor = ConsoleColor.White;
+                    Console.ResetColor();
                     Console.WriteLine($"  {options[i]}");
                 }
             }
