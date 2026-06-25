@@ -249,7 +249,11 @@ namespace MomoHTMLEditor
             else if (TempFileName != "") {
                 try {
                     string MessagesJSON = File.ReadAllText(TempFileName);
+                    #pragma warning disable CS8601 // Possible null reference assignment.
+                                                   // This part will work fine even if ReadAllText returns an empty file.
+                                                   // There's already a check in place right above for if file doesn't exist.
                     MessagesBuffer = JsonSerializer.Deserialize(MessagesJSON, AppJsonContext.Default.ListMessage);
+                    #pragma warning restore CS8601
 
                     Console.WriteLine("File loaded successfully.");
                     fileName = TempFileName;
