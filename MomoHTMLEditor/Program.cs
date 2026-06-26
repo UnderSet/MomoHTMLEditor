@@ -23,7 +23,7 @@ while (currentState != runStates.Exit)
             Console.Write($"MomoHTML Tools v{version}");
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.Write($" | Compiled {buildDate}{Environment.NewLine}");
-            Console.ResetColor();
+            Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine($"Current file: {fileName}");
             for (int i = 0; i < options.Length; i++)
             {
