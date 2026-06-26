@@ -46,7 +46,7 @@ namespace MomoHTMLEditor
                 int freeLines = Console.WindowHeight - 3;
                 int peekLines = 0;
                 Console.Clear();
-                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("[ESC] Menu [CTRL]+[ENTER] Insert Message [ENTER] Save Message [DEL] Delete Message [UP/DOWN] Change Selected Message");
                 Console.WriteLine("[TAB] Sender/Message [ALT]+[LEFT/RIGHT] Change Message Type [ALT]+[UP/DOWN] Move Message");
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -134,7 +134,7 @@ namespace MomoHTMLEditor
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control)) {
                         MessagesBuffer.Insert(MessagesIndex, new Message {
                             Sender = senderBuffer,
-                            Text = messageBuffer,
+                            Text = "",
                             Type = MsgType
                         });
                         MessagesIndex += 1;
