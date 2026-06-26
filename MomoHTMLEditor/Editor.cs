@@ -11,7 +11,9 @@ namespace MomoHTMLEditor
     public enum Inputs { Cursor, Index, Enter }
     public class Editor
     {
-        public string? fileName; // handle this being NULL...OR ELSE
+        // A bunch of variables used throughout the program.
+        // DO NOT TOUCH THESE UNLESS YOU WANT TO BREAK THINGS. I HAVE WARNED YOU.
+        public string? fileName;
         private List<Message> MessagesBuffer = new List<Message>();
         private string senderBuffer = "";
         private string messageBuffer = "";
@@ -20,6 +22,9 @@ namespace MomoHTMLEditor
         private int MessageCursorPos = 0;
         private int SenderCursorPos = 0;
         private MessageType MsgType = MessageType.Received;
+
+        // little trick to easily get the actual active buffer and not duplicate lots of code
+        // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
         private string activeBuffer
         {
             get => activeSenderBuffer ? senderBuffer : messageBuffer;
@@ -28,32 +33,41 @@ namespace MomoHTMLEditor
                 if (activeSenderBuffer) senderBuffer = value;
                 else messageBuffer = value;
             }
-        } // little method to easily get the actual active buffer and not duplicate lots of code
-          // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
+        } 
+
+        // same as the thing in activeBuffer, but apply that logic to getting the right cursor position instead
+        // (and yes, there's always two cursors being kept track of lmao)
         private int TextCursorPos {
             get => activeSenderBuffer ? SenderCursorPos : MessageCursorPos;
             set {
                 if (activeSenderBuffer) SenderCursorPos = value;
                 else MessageCursorPos = value;
             }
-        } // little method to easily get the actual active buffer and not duplicate lots of code
+        }
 
         public void Engine()
         {
             while (true)
             {
                 int width = Console.WindowWidth;
-                int freeLines = Console.WindowHeight - 3;
+                int freeLines = Console.WindowHeight - 3; // This calculates the remaining free lines in the console, which is used for the next message
+                                                          // previews (to not unnecessarily show all of them all the time and overflow the screen)
                 int peekLines = 0;
+
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.White;
+                // yeah, the inputs are hardcoded...
                 Console.WriteLine("[ESC] Menu [CTRL]+[ENTER] Insert Message [ENTER] Save Message [DEL] Delete Message [UP/DOWN] Change Selected Message");
                 Console.WriteLine("[TAB] Sender/Message [ALT]+[LEFT/RIGHT] Change Message Type [ALT]+[UP/DOWN] Move Message");
+
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"Index {MessagesIndex + 1} | " + (string.IsNullOrEmpty(fileName) ? "No File" : fileName));
+                // ternaries don't work in variable substitution so we use concat here; not the greatest idea, but it works so
 
                 // Make ABSOLUTE, BLOODY SURE these are within valid values before attempting anything
                 // (lesson learnt in blood, and yes, I distrust my own code this much)
+                // "Wouldn't you lose a bit of performance?" Yeah I did think of that, but probably doesn't affect performance THAT much
+                // (and besides I'd rather not crash, lose the user's data and- yeah...)
                 SenderCursorPos = Math.Clamp(SenderCursorPos, 0, senderBuffer.Length);
                 MessageCursorPos = Math.Clamp(MessageCursorPos, 0, messageBuffer.Length);
 
@@ -64,6 +78,9 @@ namespace MomoHTMLEditor
                 ReadOnlySpan<char> messageSpanRight = messageBuffer.AsSpan()[MessageCursorPos..];
 
                 // does a switch work here?
+                // "Wait, UnderSet, couldn't you just use some clever tricks and only write the message once?" Yeah, maybe?
+                // "Wait, why string.Concat (mostly) here and not normal concatenation?" Because we need to concatenate span values.
+                // "Underscore as your cursor looks confusing..." I know... I'm aware of it...
                 if (MsgType == MessageType.Received) {
                     Console.ForegroundColor = ConsoleColor.Green;
                     
@@ -89,6 +106,8 @@ namespace MomoHTMLEditor
                     Console.WriteLine(dispMesgBuf);
                 }
 
+                // Next line previews. Unless you know what you're doing, don't touch this shit.
+                // This is a gigantic house of cards where changing a single thing has weird consequences.
                 while (freeLines > 1) {
                     peekLines = peekLines + 1;
                     if (MessagesIndex + peekLines < MessagesBuffer.Count) {
@@ -131,6 +150,7 @@ namespace MomoHTMLEditor
 
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
                 if (keyInfo.Key == ConsoleKey.Enter) {
+                    // Insert a message in between when you press Ctrl+Enter specifically
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control)) {
                         MessagesBuffer.Insert(MessagesIndex, new Message {
                             Sender = senderBuffer,
@@ -140,12 +160,16 @@ namespace MomoHTMLEditor
                         MessagesIndex += 1;
                         messageBuffer = "";
                     }
+                    // Else if you just press Enter regularly...
                     else if (MessagesIndex < MessagesBuffer.Count) {
+                        // ...if you're selecting an existing message, simply save it
                         MessagesBuffer[MessagesIndex].Sender = senderBuffer;
                         MessagesBuffer[MessagesIndex].Text = messageBuffer;
                         MessagesBuffer[MessagesIndex].Type = MsgType;
                     }
                     else {
+                        // ...but if you're creating an existing message, this is where we "commit" it to the list
+                        // And yes, that's why we ONLY increment the index in this case (Ctrl+Enter notwithstanding)
                         MessagesBuffer.Add(new Message {
                             Sender = senderBuffer,
                             Text = messageBuffer,
@@ -197,6 +221,7 @@ namespace MomoHTMLEditor
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow || keyInfo.Key == ConsoleKey.RightArrow) {
+                    // Alt+(Arrow L/R) changes message type...
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Alt)) {
                         // I know what you're thinking. This bit is insane too.
                         // But holy FUCK if I don't already wanna fucking lose it.
@@ -208,18 +233,20 @@ namespace MomoHTMLEditor
                         }
                         if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
                     }
+                    // ..else manipulate cursor position; this is done very terribly though
                     else {
-                        // INSANELY dangerous trick for cursor pos manipulation
-                        // You would not believe my face when I first did this shit
                         TextCursorPos = Math.Clamp(TextCursorPos + (keyInfo.Key == ConsoleKey.LeftArrow ? -1 : 1), 0, activeBuffer.Length);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.Backspace) {
-                    // TODO: needs a rework after cursor feature add
+                    // Deleting stuff. Supports regular Backspace and Ctrl+Backspace...
                     TextCursorPos = Math.Clamp(TextCursorPos, 0, activeBuffer.Length);
                     ReadOnlySpan<char> bufferLeft = activeBuffer.AsSpan()[..TextCursorPos];
                     int delNumber = 1;
                     if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control)) {
+                        // FIXME: ...except (AFAIK) Ctrl+Backspace currently has an edge case (underscore as cursor here):
+                        // If you attempt to use it on something like "cats _are nice pets", Ctrl+Backspace will instead delete it to "c_are nice pets"
+                        // I've tried various things to fix it but they either didn't work or had weird side effects so this will have to do
                         bufferLeft = bufferLeft.TrimEnd();
                         int lastSpace = bufferLeft.LastIndexOf(" ");
                         delNumber = bufferLeft.Length - (lastSpace < 0 ? 0 : lastSpace);
@@ -227,14 +254,18 @@ namespace MomoHTMLEditor
                     if (bufferLeft.Length >= delNumber) {
                         // By some Christmas miracle, this DISASTER works, and I don't wanna think about it
                         activeBuffer = string.Concat(bufferLeft[..(TextCursorPos - delNumber)], activeBuffer.AsSpan()[TextCursorPos..]);
-                        Console.WriteLine(bufferLeft);
-                        Console.WriteLine(string.Concat(bufferLeft[..(TextCursorPos - delNumber)], "!"));
+
+                        // Debugging stuff - breakpoint the if end or TextCursorPos decrement right below and uncomment these lines if you would like
+                        // to see the values of bufferLeft directly after performing a delete
+                        //Console.WriteLine(bufferLeft);
+                        //Console.WriteLine(string.Concat(bufferLeft[..(TextCursorPos - delNumber)], "!"));
                     }
                     TextCursorPos = TextCursorPos - delNumber; // correct cursor position after deleting
                 }
                 else if (char.IsControl(keyInfo.KeyChar)) {
                     // quite literally do NOTHING if it's a control character and is NOT covered by the cases above
                 }
+                // After checking it's not a control character or controlling input 
                 else {
                     activeBuffer = activeBuffer.Insert(TextCursorPos, keyInfo.KeyChar.ToString());
                     TextCursorPos += 1;
@@ -275,6 +306,8 @@ namespace MomoHTMLEditor
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
         }
 
+        // You might have noticed this is similar to SaveAs() for the most part.
+        // Look, I'm not making SaveAs() do double duty, okay? See Program.CS L79-93 (as of time of comment).
         internal void Save() {
             Console.WriteLine($"{Environment.NewLine}");
             try {
@@ -347,18 +380,38 @@ namespace MomoHTMLEditor
             MessagesIndex = Math.Clamp(MessagesIndex, 0, MessagesBuffer.Count);
         }
 
+        // Looking back, I'm not sure what the hell this is...
         //private static (ReadOnlySpan<char> Left, ReadOnlySpan<char> Right) SplitBuffer(string text, int cursorPos) {
         //    ReadOnlySpan<char> span = text.AsSpan();
         //    return (span[..cursorPos], span[cursorPos..]);
         //}
     }
+
+    // Data structure used for the individual message elements in the MessageBuffer List.
+    // Serializes into JSON as:
+    // {
+    //     "Sender": (message sender name),
+    //     "Text": (message text),
+    //     "Type": 1
+    // },
+    // Also, Sender is ALWAYS saved in the editor's output JSON even if type is Received/System (aka Neutral), however is ignored when converting.
+
     public class Message
     {
         public required string Sender { get; set; }
+        // Converter (?) treats sender name special.
+        // Specifically, the format for non-matching sender name and profile image is: (Sender name)|(Profile image)
+        // I've seen a few MomoTalk works here and there have a need for that, and that was a way of getting it working that I personally think is both
+        //   simple to parse and easy to understand at a glance, so I'm keeping that format all the way from the original.
         public required string Text { get; set; }
-        public MessageType Type { get; set; }
+        public MessageType Type { get; set; } // 0 is Received, 1 is Sent, 2 is System/Neutral (think the middle aligned gray bubbles)
     }
 
+    // Required to get JSON serialization working when AOT compiling, which I want to make possible and is how I prefer to build/deploy this outside of
+    // debugging.
+    // (AOT compilation does not require a .NET runtime, which significantly reduces barrier to entry (much as something like this even has one).)
+    // And yeah, I'm aware that .NET has singlefile builds with runtime bundled in (self-contained is the proper term).
+    // Feel free to build this that way! I might reconsider that approach myself.
     [JsonSerializable(typeof(Message))]
     [JsonSerializable(typeof(List<Message>))]
     public partial class AppJsonContext : JsonSerializerContext {
