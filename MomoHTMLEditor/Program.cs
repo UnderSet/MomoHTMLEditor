@@ -34,7 +34,8 @@ while (currentState != runStates.Exit)
                 }
                 else
                 {
-                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.White; // this "fixes" a bizarre edge case where colors are screwed
+                                                                  // (in hindsight should have done this in the beginning)
                     Console.WriteLine($"  {options[i]}");
                 }
             }
@@ -79,6 +80,7 @@ while (currentState != runStates.Exit)
                         break;
                     case 7: // Exit
                         currentState = runStates.Exit;
+                        Console.ResetColor();
                         break;
                 }
             }
