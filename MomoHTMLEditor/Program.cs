@@ -76,6 +76,11 @@ while (currentState != runStates.Exit)
                         editor.Load();
                         selMenuInd = 0;
                         break;
+                    case 3:
+                        //Exporter export = new Exporter();
+                        //Exporter.Export(editor.MessagesBuffer, fileName);
+                        Exporter.Export(editor.MessagesBuffer, fileName);
+                        break;
                     case 4:
                         // Most apps I know make Save trigger Save As instead if there's no current active file (or whatever it's supposed to be called)
                         // So here's MomoHTMLEditor doing the same (as it probably should tbh)

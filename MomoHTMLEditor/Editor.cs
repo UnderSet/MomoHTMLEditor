@@ -14,7 +14,7 @@ namespace MomoHTMLEditor
         // A bunch of variables used throughout the program.
         // DO NOT TOUCH THESE UNLESS YOU WANT TO BREAK THINGS. I HAVE WARNED YOU.
         public string? fileName;
-        private List<Message> MessagesBuffer = new List<Message>();
+        public List<Message> MessagesBuffer = new List<Message>();
         private string senderBuffer = "";
         private string messageBuffer = "";
         private bool activeSenderBuffer = false;
