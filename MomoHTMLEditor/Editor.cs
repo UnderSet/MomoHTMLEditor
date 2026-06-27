@@ -50,9 +50,10 @@ namespace MomoHTMLEditor
             while (true)
             {
                 int width = Console.WindowWidth;
-                int freeLines = Console.WindowHeight - 3; // This calculates the remaining free lines in the console, which is used for the next message
+                int freeLines = Console.WindowHeight - 4; // This calculates the remaining free lines in the console, which is used for the next message
                                                           // previews (to not unnecessarily show all of them all the time and overflow the screen)
                 int peekLines = 0;
+                int dispLines = 0; // variable used and reused elsewhere
 
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.White;
@@ -88,8 +89,8 @@ namespace MomoHTMLEditor
                     // If you've got a better way to workaround the compiler error here, be my guest!
                     string dispSendBuf = (MessagesIndex + 1) + string.Concat(" >R |", senderSpanLeft, (activeSenderBuffer ? "_" : ""), senderSpanRight);
                     string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" >R |", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
-                    freeLines = freeLines - (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width);
-                    freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                    dispLines = (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width) + (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                    freeLines = freeLines - dispLines;
                     Console.WriteLine(dispSendBuf);
                     Console.WriteLine(dispMesgBuf);
                 }
@@ -116,22 +117,40 @@ namespace MomoHTMLEditor
                             Console.ForegroundColor = ConsoleColor.DarkGreen;
                             string dispSendBuf = ">R |" + nextmsg.Sender;
                             string dispMesgBuf = ">  |" + nextmsg.Text;
-                            freeLines = freeLines - (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width);
-                            freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
-                            Console.WriteLine(dispSendBuf);
-                            Console.WriteLine(dispMesgBuf);
+                            dispLines = (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width)
+                                + (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            if (freeLines >= dispLines) {
+                                Console.WriteLine(dispSendBuf);
+                                Console.WriteLine(dispMesgBuf);
+                                freeLines = freeLines - dispLines;
+                            }
+                            else {
+                                freeLines = 0;
+                            }
                         }
                         else if (nextmsg.Type == MessageType.Sent) {
                             Console.ForegroundColor = ConsoleColor.DarkCyan;
                             string dispMesgBuf = " S<|" + nextmsg.Text;
-                            freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
-                            Console.WriteLine(dispMesgBuf);
+                            dispLines = (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            if (freeLines >= dispLines) {
+                                Console.WriteLine(dispMesgBuf);
+                                freeLines = freeLines - dispLines;
+                            }
+                            else {
+                                freeLines = 0;
+                            }
                         }
                         else if (nextmsg.Type == MessageType.System) {
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             string dispMesgBuf = "-N-|" + nextmsg.Text;
-                            freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
-                            Console.WriteLine(dispMesgBuf);
+                            dispLines = (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            if (freeLines >= dispLines) {
+                                freeLines = freeLines - dispLines;
+                                Console.WriteLine(dispMesgBuf);
+                            }
+                            else {
+                                freeLines = 0;
+                            }
                         }
                     }
                     else if (MessagesIndex + peekLines == MessagesBuffer.Count) {
