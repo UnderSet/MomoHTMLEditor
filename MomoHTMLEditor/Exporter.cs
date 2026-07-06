@@ -66,7 +66,7 @@ namespace MomoHTMLEditor {
                                 line = $"<div class=\"msg received\">" +
                                     $"<p><img class=\"avatar\" src=\"\"></p>" +
                                     $"<p><span class=\"speaker\">{m.Sender}</span></p>" +
-                                    $"<p class=\"bubble\">{m.Text}</p></div>";
+                                    $"<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
 
                             // There was probably a better way to do it than this, but the way this foreach loop works, this was all I could come up with atm
@@ -74,13 +74,17 @@ namespace MomoHTMLEditor {
                             lastMessageType = MessageType.Received;
                             break;
                         case MessageType.Sent:
-                            line = $"<div class=\"msg sent\"><p class=\"bubble\">{m.Text}</p></div>";
+                            line = $"<div class=\"msg sent\"><p class=\"bubble\""
+                                + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"")
+                                + $">{m.Text}</p></div>";
                             break;
                         // This is only supported when using my stylesheet specifically for now, unfortunately.
-                        // These are the "neutral" gray system bubbles (hence being internally called System like this) you sometimes see for, say, noting what time it is
-                        //   or to narrate in MomoTalk works (though use like that is rare from what I know).
+                        // These are the "neutral" gray system bubbles (hence being internally called System like this) you sometimes see for, say, noting what time
+                        //   it is or to narrate in MomoTalk works (though use like that is rare from what I know).
                         case MessageType.System:
-                            line = $"<div class=\"msg system\"><p class=\"bubble\">{m.Text}</p></div>";
+                            line = $"<div class=\"msg system\"><p class=\"bubble\""
+                                + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"")
+                                + $">{m.Text}</p></div>";
                             break;
                     }
 

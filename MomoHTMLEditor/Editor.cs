@@ -17,31 +17,81 @@ namespace MomoHTMLEditor
         public List<Message> MessagesBuffer = new List<Message>();
         private string senderBuffer = "";
         private string messageBuffer = "";
-        private bool activeSenderBuffer = false;
+        private string stylingBuffer = "";
+        private int activeBufferType = 0;
         private int MessagesIndex = 0;
         private int MessageCursorPos = 0;
         private int SenderCursorPos = 0;
+        private int StylingCursorPos = 0;
         private MessageType MsgType = MessageType.Received;
 
         // little trick to easily get the actual active buffer and not duplicate lots of code
         // (see MomoHTMLEditor.Editor.Engine; if not for this that'd be double the input codebase at best)
         private string activeBuffer
         {
-            get => activeSenderBuffer ? senderBuffer : messageBuffer;
+            //get => activeBufferType ? senderBuffer : messageBuffer;
+            get {
+                switch (activeBufferType) {
+                    case 0:
+                        return senderBuffer;
+                    case 1:
+                        return messageBuffer;
+                    case 2:
+                        return stylingBuffer;
+                    default: // this shouldn't ever be outside of 0-2, but if I don't do this the tools won't STFU
+                        return "";
+                }
+            }
             set
             {
-                if (activeSenderBuffer) senderBuffer = value;
-                else messageBuffer = value;
+                //if (activeBufferType) senderBuffer = value;
+                //else messageBuffer = value;
+                switch (activeBufferType) {
+                    case 0:
+                        senderBuffer = value;
+                        break;
+                    case 1:
+                        messageBuffer = value;
+                        break;
+                    case 2:
+                        stylingBuffer = value;
+                        break;
+                }
             }
-        } 
+        }
 
         // same as the thing in activeBuffer, but apply that logic to getting the right cursor position instead
         // (and yes, there's always two cursors being kept track of lmao)
         private int TextCursorPos {
-            get => activeSenderBuffer ? SenderCursorPos : MessageCursorPos;
+            //get => activeBufferType ? SenderCursorPos : MessageCursorPos;
+            //set {
+            //    if (activeBufferType) SenderCursorPos = value;
+            //    else MessageCursorPos = value;
+            //}
+            get {
+                switch (activeBufferType) {
+                    case 0:
+                        return SenderCursorPos;
+                    case 1:
+                        return MessageCursorPos;
+                    case 2:
+                        return StylingCursorPos;
+                    default: // this shouldn't ever be outside of 0-2, but if I don't do this the tools won't STFU
+                        return 0;
+                }
+            }
             set {
-                if (activeSenderBuffer) SenderCursorPos = value;
-                else MessageCursorPos = value;
+                switch (activeBufferType) {
+                    case 0:
+                        SenderCursorPos = value;
+                        break;
+                    case 1:
+                        MessageCursorPos = value;
+                        break;
+                    case 2:
+                        StylingCursorPos = value;
+                        break;
+                }
             }
         }
 
@@ -71,40 +121,115 @@ namespace MomoHTMLEditor
                 // (and besides I'd rather not crash, lose the user's data and- yeah...)
                 SenderCursorPos = Math.Clamp(SenderCursorPos, 0, senderBuffer.Length);
                 MessageCursorPos = Math.Clamp(MessageCursorPos, 0, messageBuffer.Length);
+                StylingCursorPos = Math.Clamp(StylingCursorPos, 0, stylingBuffer.Length);
 
                 // probably don't need four spans here and could get away with 2 and just doing [..SenderCursorPos] inline (for example) but I'm mentally done
                 ReadOnlySpan<char> senderSpanLeft = senderBuffer.AsSpan()[..SenderCursorPos];
                 ReadOnlySpan<char> senderSpanRight = senderBuffer.AsSpan()[SenderCursorPos..];
                 ReadOnlySpan<char> messageSpanLeft = messageBuffer.AsSpan()[..MessageCursorPos];
                 ReadOnlySpan<char> messageSpanRight = messageBuffer.AsSpan()[MessageCursorPos..];
+                ReadOnlySpan<char> stylingSpanLeft = stylingBuffer.AsSpan()[..StylingCursorPos];
+                ReadOnlySpan<char> stylingSpanRight = stylingBuffer.AsSpan()[StylingCursorPos..];
 
                 // does a switch work here?
                 // "Wait, UnderSet, couldn't you just use some clever tricks and only write the message once?" Yeah, maybe?
                 // "Wait, why string.Concat (mostly) here and not normal concatenation?" Because we need to concatenate span values.
                 // "Underscore as your cursor looks confusing..." I know... I'm aware of it...
                 if (MsgType == MessageType.Received) {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    
-                    // "Why are you concatenating with + instead of inside the string.Concat?"
-                    // If you've got a better way to workaround the compiler error here, be my guest!
-                    string dispSendBuf = (MessagesIndex + 1) + string.Concat(" >R |", senderSpanLeft, (activeSenderBuffer ? "_" : ""), senderSpanRight);
-                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" >R |", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
-                    dispLines = (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width) + (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                    // string.Concat has a max of 4 arguments when using spans before it freaks the crap out
+                    string dispSendBuf1 = (MessagesIndex + 1) + " >R  ";
+                    string dispMesgBuf1 = (MessagesIndex + 1) + string.Concat("     ", stylingSpanLeft);
+                    dispLines = (int)Math.Ceiling(
+                                    ((decimal)dispSendBuf1.Length
+                                     + (decimal)senderBuffer.Length
+                                     + (activeBufferType == 0 ? 2 : 1))
+                                    / (decimal)width) 
+                              + (int)Math.Ceiling(
+                                    ((decimal)dispMesgBuf1.Length
+                                     + (decimal)senderSpanRight.Length
+                                     + (decimal)messageBuffer.Length
+                                     + (activeBufferType == 0 ? 1 : 2))
+                                    / (decimal)width);
                     freeLines = freeLines - dispLines;
-                    Console.WriteLine(dispSendBuf);
-                    Console.WriteLine(dispMesgBuf);
+
+                    // If anyone has a less insane way to do multicolored lines, lemme know
+                    Console.ForegroundColor = (activeBufferType == 0 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(dispSendBuf1);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("|");
+                    Console.ForegroundColor = (activeBufferType == 0 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(senderSpanLeft);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write((activeBufferType == 0 ? "_" : ""));
+                    Console.ForegroundColor = (activeBufferType == 0 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(senderSpanRight);
+                    Console.Write(Environment.NewLine);
+
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(dispMesgBuf1);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write((activeBufferType == 2 ? "_" : ""));
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(stylingSpanRight);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("|");
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(messageSpanLeft);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write((activeBufferType == 1 ? "_" : ""));
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Green : ConsoleColor.Gray);
+                    Console.Write(messageSpanRight);
+                    Console.Write(Environment.NewLine);
                 }
-                else if (MsgType == MessageType.Sent ) {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat("  S<|", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
-                    freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
-                    Console.WriteLine(dispMesgBuf);
+                else if (MsgType == MessageType.Sent) {
+                    string dispMesgBuf2 = (MessagesIndex + 1) + string.Concat("  S< ", stylingSpanLeft);
+                    freeLines = freeLines - (int)Math.Ceiling(
+                        ((decimal)dispMesgBuf2.Length 
+                         + 2
+                         + (decimal)stylingSpanRight.Length
+                         + messageBuffer.Length)
+                        / (decimal)width);
+
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Cyan : ConsoleColor.Gray);
+                    Console.Write(dispMesgBuf2);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write(activeBufferType == 2 ? "_" : "");
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Cyan : ConsoleColor.Gray);
+                    Console.Write(stylingSpanRight);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("|");
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Cyan : ConsoleColor.Gray);
+                    Console.Write(messageSpanLeft);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write((activeBufferType == 1 ? "_" : ""));
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Cyan : ConsoleColor.Gray);
+                    Console.Write(messageSpanRight);
+                    Console.Write(Environment.NewLine);
                 }
                 else if (MsgType == MessageType.System) {
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" -N-|", messageSpanLeft, (activeSenderBuffer ? "" : "_"), messageSpanRight);
-                    freeLines = freeLines - (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
-                    Console.WriteLine(dispMesgBuf);
+                    //string dispMesgBuf = (MessagesIndex + 1) + string.Concat(" -N- |", messageSpanLeft, (activeBufferType == 0 ? "" : "_"), messageSpanRight);
+                    string dispMesgBuf2 = (MessagesIndex + 1) + string.Concat(" -N- ", stylingSpanLeft);
+                    freeLines = freeLines - (int)Math.Ceiling(
+                        ((decimal)dispMesgBuf2.Length
+                         + 2
+                         + (decimal)stylingSpanRight.Length
+                         + messageBuffer.Length)
+                        / (decimal)width);
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Magenta : ConsoleColor.Gray);
+                    Console.Write(dispMesgBuf2);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write(activeBufferType == 2 ? "_" : "");
+                    Console.ForegroundColor = (activeBufferType == 2 ? ConsoleColor.Magenta : ConsoleColor.Gray);
+                    Console.Write(stylingSpanRight);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("|");
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Magenta : ConsoleColor.Gray);
+                    Console.Write(messageSpanLeft);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write((activeBufferType == 1 ? "_" : ""));
+                    Console.ForegroundColor = (activeBufferType == 1 ? ConsoleColor.Magenta : ConsoleColor.Gray);
+                    Console.Write(messageSpanRight);
+                    Console.Write(Environment.NewLine);
                 }
 
                 // Next line previews. Unless you know what you're doing, don't touch this shit.
@@ -114,14 +239,21 @@ namespace MomoHTMLEditor
                     if (MessagesIndex + peekLines < MessagesBuffer.Count) {
                         var nextmsg = MessagesBuffer[MessagesIndex + peekLines];
                         if (nextmsg.Type == MessageType.Received) {
-                            Console.ForegroundColor = ConsoleColor.DarkGreen;
-                            string dispSendBuf = ">R |" + nextmsg.Sender;
-                            string dispMesgBuf = ">  |" + nextmsg.Text;
-                            dispLines = (int)Math.Ceiling((decimal)dispSendBuf.Length / (decimal)width)
-                                + (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            //string dispSendHeadBuf = ">R  " + (nextmsg.Styling ?? "");
+                            string dispMesgBuf = $"{nextmsg.Styling ?? ""}|{nextmsg.Text}";
+                            dispLines = (int)Math.Ceiling(((decimal)nextmsg.Sender.Length + 5) / (decimal)width)
+                                + (int)Math.Ceiling(((decimal)dispMesgBuf.Length + 4) / (decimal)width);
                             if (freeLines >= dispLines) {
-                                Console.WriteLine(dispSendBuf);
-                                Console.WriteLine(dispMesgBuf);
+                                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                                Console.Write(">R  ");
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.Write($"|{nextmsg.Sender}");
+                                //Console.Write("|");
+                                //Console.Write(nextmsg.Sender);
+                                Console.Write(Environment.NewLine);
+                                Console.Write("    ");
+                                Console.Write(dispMesgBuf);
+                                Console.Write(Environment.NewLine);
                                 freeLines = freeLines - dispLines;
                             }
                             else {
@@ -129,11 +261,16 @@ namespace MomoHTMLEditor
                             }
                         }
                         else if (nextmsg.Type == MessageType.Sent) {
-                            Console.ForegroundColor = ConsoleColor.DarkCyan;
-                            string dispMesgBuf = " S<|" + nextmsg.Text;
-                            dispLines = (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            string dispMesgBuf = (nextmsg.Styling ?? "") + "|" + nextmsg.Text;
+                            dispLines = (int)Math.Ceiling(((decimal)dispMesgBuf.Length + 4) / (decimal)width);
                             if (freeLines >= dispLines) {
-                                Console.WriteLine(dispMesgBuf);
+                                //Console.WriteLine(dispMesgBuf);
+                                //freeLines = freeLines - dispLines;
+                                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                Console.Write(" S< ");
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.Write(dispMesgBuf);
+                                Console.Write(Environment.NewLine);
                                 freeLines = freeLines - dispLines;
                             }
                             else {
@@ -141,12 +278,15 @@ namespace MomoHTMLEditor
                             }
                         }
                         else if (nextmsg.Type == MessageType.System) {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            string dispMesgBuf = "-N-|" + nextmsg.Text;
-                            dispLines = (int)Math.Ceiling((decimal)dispMesgBuf.Length / (decimal)width);
+                            string dispMesgBuf = (nextmsg.Styling ?? "") + "|" + nextmsg.Text;
+                            dispLines = (int)Math.Ceiling(((decimal)dispMesgBuf.Length + 4) / (decimal)width);
                             if (freeLines >= dispLines) {
+                                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                                Console.Write("-N- ");
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.Write(dispMesgBuf);
+                                Console.Write(Environment.NewLine);
                                 freeLines = freeLines - dispLines;
-                                Console.WriteLine(dispMesgBuf);
                             }
                             else {
                                 freeLines = 0;
@@ -174,6 +314,7 @@ namespace MomoHTMLEditor
                         MessagesBuffer.Insert(MessagesIndex, new Message {
                             Sender = senderBuffer,
                             Text = "",
+                            Styling = stylingBuffer,
                             Type = MsgType
                         });
                         MessagesIndex += 1;
@@ -184,6 +325,7 @@ namespace MomoHTMLEditor
                         // ...if you're selecting an existing message, simply save it
                         MessagesBuffer[MessagesIndex].Sender = senderBuffer;
                         MessagesBuffer[MessagesIndex].Text = messageBuffer;
+                        MessagesBuffer[MessagesIndex].Styling = stylingBuffer;
                         MessagesBuffer[MessagesIndex].Type = MsgType;
                     }
                     else {
@@ -192,6 +334,7 @@ namespace MomoHTMLEditor
                         MessagesBuffer.Add(new Message {
                             Sender = senderBuffer,
                             Text = messageBuffer,
+                            Styling = stylingBuffer,
                             Type = MsgType });
                         MessagesIndex += 1;
                         messageBuffer = "";
@@ -206,10 +349,13 @@ namespace MomoHTMLEditor
                 }
                 else if (keyInfo.Key == ConsoleKey.Tab) {
                     if (MsgType == MessageType.Received) {
-                        activeSenderBuffer = !activeSenderBuffer;
+                        activeBufferType = (activeBufferType + 1) % 3;
                     }
                     else {
-                        activeSenderBuffer = false;
+                        // "What is this fucking ternary?" is a REALLY damn good question.
+                        // There's probably a better way to prevent accidentally changing to Sender buffer but allow Styling buffer when in Sent/System message
+                        //   modes, but eh, whatever.
+                        activeBufferType = activeBufferType == 2 ? 1 : 2;
                     }
                     //TextCursorPos = 0;
                 }
@@ -229,14 +375,17 @@ namespace MomoHTMLEditor
                         if (MessagesIndex < MessagesBuffer.Count) {
                             senderBuffer = MessagesBuffer[MessagesIndex].Sender;
                             messageBuffer = MessagesBuffer[MessagesIndex].Text;
+                            stylingBuffer = MessagesBuffer[MessagesIndex].Styling ?? "";
                             MsgType = MessagesBuffer[MessagesIndex].Type;
                         }
                         else {
                             messageBuffer = "";
+                            stylingBuffer = "";
                         }
-                        if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
+                        if (MsgType != MessageType.Received) { activeBufferType = 1; }
                         MessageCursorPos = messageBuffer.Length; // Reset cursor position every time we switch
                         SenderCursorPos = senderBuffer.Length;   // I. Know. What. I'm. Doing.
+                        StylingCursorPos = stylingBuffer.Length;
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow || keyInfo.Key == ConsoleKey.RightArrow) {
@@ -250,7 +399,7 @@ namespace MomoHTMLEditor
                         else if (keyInfo.Key == ConsoleKey.RightArrow) {
                             MsgType = (MessageType)(((int)MsgType == 2) ? 0 : MsgType + 1);
                         }
-                        if (MsgType != MessageType.Received) { activeSenderBuffer = false; }
+                        if (MsgType != MessageType.Received) { activeBufferType = 1; }
                     }
                     // ..else manipulate cursor position; this is done very terribly though
                     else {
@@ -279,7 +428,7 @@ namespace MomoHTMLEditor
                         //Console.WriteLine(bufferLeft);
                         //Console.WriteLine(string.Concat(bufferLeft[..(TextCursorPos - delNumber)], "!"));
                     }
-                    TextCursorPos = TextCursorPos - delNumber; // correct cursor position after deleting
+                    TextCursorPos = TextCursorPos - Math.Min(delNumber, TextCursorPos); // correct cursor position after deleting
                 }
                 else if (char.IsControl(keyInfo.KeyChar)) {
                     // quite literally do NOTHING if it's a control character and is NOT covered by the cases above
@@ -424,6 +573,7 @@ namespace MomoHTMLEditor
         //   simple to parse and easy to understand at a glance, so I'm keeping that format all the way from the original.
         public required string Text { get; set; }
         public MessageType Type { get; set; } // 0 is Received, 1 is Sent, 2 is System/Neutral (think the middle aligned gray bubbles)
+        public string? Styling { get; set; }
     }
 
     // Required to get JSON serialization working when AOT compiling, which I want to make possible and is how I prefer to build/deploy this outside of
