@@ -60,13 +60,14 @@ namespace MomoHTMLEditor {
                             // Technically I could have dealt with it by only saving sender type if it's a received message but...hindsight is 20/20 and I don't
                             // wanna break any backwards compatibility (this tool had some use in private)
                             if (lastMessageType == MessageType.Received && lastSender == m.Sender) {
-                                line = $"<div class=\"msg received notail\"><p class=\"bubble\">{m.Text}</p></div>";
+                                line = $"<div class=\"msg received notail\">" +
+                                    "<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
                             else {
                                 line = $"<div class=\"msg received\">" +
                                     $"<p><img class=\"avatar\" src=\"\"></p>" +
                                     $"<p><span class=\"speaker\">{m.Sender}</span></p>" +
-                                    $"<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
+                                    "<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
 
                             // There was probably a better way to do it than this, but the way this foreach loop works, this was all I could come up with atm
