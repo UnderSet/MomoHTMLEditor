@@ -5,7 +5,7 @@ Tool to easily edit and create MomoTalk-style stuff using HTML.
 ## FAQs (maybe)
 
 ### Q: Why are you rewriting this?
-Take a *good, good* look at my PowerShell code and tell me that stuff's maintainable. (It is not.)
+Take a *good, good* look at my PowerShell code and tell me that stuff's maintainable. (It is not. Not like this is either, mind.)
 
 Also, *look I just wanted an excuse to get into C#.* Was kinda looking to do it at *some* point.
 
