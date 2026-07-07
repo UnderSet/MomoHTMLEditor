@@ -88,22 +88,23 @@ namespace MomoHTMLEditor {
                             // Sender is ALWAYS saved for ALL message types so we also check message type here as well
                             // Technically I could have dealt with it by only saving sender type if it's a received message but...hindsight is 20/20 and I don't
                             // wanna break any backwards compatibility (this tool had some use in private)
+                            var parts = m.Sender.Split("|", 2);
+                            string sender = parts[0];
+                            string profile = parts.Length > 1 ? parts[1] : parts[0];
+                            #pragma warning disable CS8620 // "Argument cannot be used for parameter due to differences in the nullability of reference types."
+                                                           // I have...not the slightest fucking clue what that is, but this works so...
+                            #pragma warning disable CS8604 // good ol' "Possible null reference argument." (99% sure it can't happen once we got here though)
+                            string image = profileListOverrides.GetValueOrDefault(profile, null)
+                                        ?? profileList.GetValueOrDefault(profile, "");
+                            #pragma warning restore CS8604
+                            #pragma warning restore CS8620
+
+
                             if (lastMessageType == MessageType.Received && lastSender == m.Sender) {
                                 line = $"<div class=\"msg received notail\">" +
                                     "<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
                             else {
-                                var parts = m.Sender.Split("|", 2);
-                                string sender = parts[0];
-                                string profile = parts.Length > 1 ? parts[1] : parts[0];
-                                #pragma warning disable CS8620 // "Argument cannot be used for parameter due to differences in the nullability of reference types."
-                                                                // I have...not the slightest fucking clue what that is, but this works so...
-                                #pragma warning disable CS8604 // good ol' "Possible null reference argument." (99% sure it can't happen once we got here though)
-                                string image = profileListOverrides.GetValueOrDefault(profile, null)
-                                            ?? profileList.GetValueOrDefault(profile, "");
-                                #pragma warning restore CS8604
-                                #pragma warning restore CS8620
-
                                 line = $"<div class=\"msg received\">" +
                                     $"<p><img class=\"avatar\" src=\"{image}\"></p>" +
                                     $"<p><span class=\"speaker\">{sender}</span></p>" +
@@ -111,13 +112,14 @@ namespace MomoHTMLEditor {
                             }
 
                             // There was probably a better way to do it than this, but the way this foreach loop works, this was all I could come up with atm
-                            lastSender = m.Sender;
+                            lastSender = sender;
                             lastMessageType = MessageType.Received;
                             break;
                         case MessageType.Sent:
                             line = $"<div class=\"msg sent\"><p class=\"bubble\""
                                 + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"")
                                 + $">{m.Text}</p></div>";
+                            lastMessageType = MessageType.Sent;
                             break;
                         // This is only supported when using my stylesheet specifically for now, unfortunately.
                         // These are the "neutral" gray system bubbles (hence being internally called System like this) you sometimes see for, say, noting what time
@@ -126,6 +128,7 @@ namespace MomoHTMLEditor {
                             line = $"<div class=\"msg system\"><p class=\"bubble\""
                                 + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"")
                                 + $">{m.Text}</p></div>";
+                            lastMessageType = MessageType.Sent;
                             break;
                     }
 
