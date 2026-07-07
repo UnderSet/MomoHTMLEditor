@@ -27,10 +27,39 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace MomoHTMLEditor {
     internal class Exporter {
-        public static void Export(List<Message> List, string fileName) {
+        public void Export(List<Message> List, string fileName) {
+            #pragma warning disable CS8604 // embedded resource - never null...unless something goes catastrophically wrong ofc
+            string assembly = new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("profiles.json")).ReadToEnd();
+            #pragma warning restore CS8604
+            Dictionary<string, string> profileList = JsonSerializer.Deserialize(assembly, AppJsonContext.Default.DictionaryStringString)!;
+
+            string? overridesstr = null;
+
+            try {
+                overridesstr = File.ReadAllText("profiles.json");
+            }
+            catch (UnauthorizedAccessException) {
+                Console.WriteLine("Permission denied: Cannot read profile image overrides.");
+            }
+            catch (System.Text.Json.JsonException ex) {
+                Console.WriteLine($"JSON conversion (profile image overrides) failed: {ex.Message}");
+            }
+            catch (IOException ex) {
+                Console.WriteLine($"I/O exception while loading profile image overrides: {ex.Message}");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"An error occurred loading profile image overrides: {ex.Message}");
+            }
+
+            Dictionary<string, string>? profileListOverrides = !string.IsNullOrEmpty(overridesstr)
+                ? JsonSerializer.Deserialize(overridesstr, AppJsonContext.Default.DictionaryStringString)
+                : new();
+
             string fileExportName = $"{fileName}.html"; // For example, if our input file name is "case1.json" in the case of use with this tool, we'll get output named
                                                         //   "case1.json.html" - I at the end decided against trying to replace the file extension as this tool was *not*
                                                         //   designed with a hard extension and whatever the user typed as their filename is saved as-is.
@@ -64,9 +93,20 @@ namespace MomoHTMLEditor {
                                     "<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
                             else {
+                                var parts = m.Sender.Split("|", 2);
+                                string sender = parts[0];
+                                string profile = parts.Length > 1 ? parts[1] : parts[0];
+                                #pragma warning disable CS8620 // "Argument cannot be used for parameter due to differences in the nullability of reference types."
+                                                                // I have...not the slightest fucking clue what that is, but this works so...
+                                #pragma warning disable CS8604 // good ol' "Possible null reference argument." (99% sure it can't happen once we got here though)
+                                string image = profileListOverrides.GetValueOrDefault(profile, null)
+                                            ?? profileList.GetValueOrDefault(profile, "");
+                                #pragma warning restore CS8604
+                                #pragma warning restore CS8620
+
                                 line = $"<div class=\"msg received\">" +
-                                    $"<p><img class=\"avatar\" src=\"\"></p>" +
-                                    $"<p><span class=\"speaker\">{m.Sender}</span></p>" +
+                                    $"<p><img class=\"avatar\" src=\"{image}\"></p>" +
+                                    $"<p><span class=\"speaker\">{sender}</span></p>" +
                                     "<p class=\"bubble\"" + (string.IsNullOrEmpty(m.Styling) ? "" : $" style=\"{m.Styling}\"") + $">{m.Text}</p></div>";
                             }
 

@@ -7,12 +7,13 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
-	<Version>0.3.1</Version>
+	<Version>0.4.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
       <_Parameter1>BuildDate</_Parameter1>
       <_Parameter2>$([System.DateTime]::UtcNow.ToString("dd/MM/yyyy HH:mm:ss"))</_Parameter2>
     </AssemblyAttribute>
+	<EmbeddedResource Include="profiles.json" LogicalName="profiles.json"/>
   </ItemGroup>
 </Project>

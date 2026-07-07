@@ -583,6 +583,8 @@ namespace MomoHTMLEditor
     // Feel free to build this that way! I might reconsider that approach myself.
     [JsonSerializable(typeof(Message))]
     [JsonSerializable(typeof(List<Message>))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(Dictionary<string, string>))]
     public partial class AppJsonContext : JsonSerializerContext {
     }
 }

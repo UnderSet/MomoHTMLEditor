@@ -77,9 +77,9 @@ while (currentState != runStates.Exit)
                         selMenuInd = 0;
                         break;
                     case 3:
-                        //Exporter export = new Exporter();
-                        //Exporter.Export(editor.MessagesBuffer, fileName);
-                        Exporter.Export(editor.MessagesBuffer, fileName);
+                        Exporter? export = new Exporter();
+                        export.Export(editor.MessagesBuffer, fileName); // silly, I know...
+                        export = null; // oi, GC, go clean this thing up!
                         break;
                     case 4:
                         // Most apps I know make Save trigger Save As instead if there's no current active file (or whatever it's supposed to be called)
