@@ -4,6 +4,8 @@ A CLI tool to easily edit and create MomoTalk-style stuff using HTML quickly, ba
 
 **_Not_** a fully automated tool by any means. You should know how to edit HTML and basic CSS styling to edit on the output of this tool. Styling on messages is only included for convenience.
 
+[See this repository for assets.](https://github.com/UnderSet/MomoHTMLEditorAssets)
+
 ## Features
 - 3 message types: Sent (from Sensei), Received (from someone else), System
   - "Choice" messages are out of scope (and yes, I'm aware ingame MomoTalk does have it)
