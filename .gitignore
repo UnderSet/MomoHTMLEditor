@@ -412,7 +412,7 @@ FodyWeavers.xsd
 # Now, technically you shouldn't have these commented in your projects, but uh, I really, really don't want editor files in my projects. Period.it 
 # !.vscode/settings.json
 # !.vscode/tasks.json
-# !.vscode/launch.json
+!.vscode/launch.json
 # !.vscode/extensions.json
 # !.vscode/*.code-snippets
 
