@@ -112,7 +112,7 @@ namespace MomoHTMLEditor {
                             }
 
                             // There was probably a better way to do it than this, but the way this foreach loop works, this was all I could come up with atm
-                            lastSender = sender;
+                            lastSender = m.Sender;
                             lastMessageType = MessageType.Received;
                             break;
                         case MessageType.Sent:
