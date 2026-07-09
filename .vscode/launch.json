@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": ".NET Core Launch (integrated terminal)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -13,6 +13,17 @@
             "args": [],
             "cwd": "${workspaceFolder}/MomoHTMLEditor",
             "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Launch (external terminal)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/MomoHTMLEditor/bin/Debug/net10.0/MomoHTMLEditor.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/MomoHTMLEditor",
+            "console": "externalTerminal",
             "stopAtEntry": false
         },
         {
