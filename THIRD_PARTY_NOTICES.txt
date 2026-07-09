@@ -1,0 +1,5 @@
+HTML structure in Exporter.cs (/MomoHTMLEditor/Exporter.cs) is based off of ManicMinic's work (https://archiveofourown.org/works/64821349)
+(creator AO3 profile: https://archiveofourown.org/users/ManicMinic), used with permission. Not covered under this repository's MIT license.
+See comments in Exporter.cs for excluded section.
+
+You are free to reuse as you see fit as well, same as original.

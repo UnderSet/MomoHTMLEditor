@@ -79,6 +79,9 @@ namespace MomoHTMLEditor {
                 //   at least - embed the font from Google Fonts or something.
                 writer.WriteLine("<link rel=\"stylesheet\" href=\"https://underset.github.io/MomoHTMLEditorAssets/css/momotalk.css\" crossorigin=\"anonymous\">");
 
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Licensing exclusion (see README.md and THIRD_PARTY_NOTICES.txt) begin here
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 foreach (Message m in List) {
                     string line = ""; // VS will bitch at me if I don't set it to explicit empty string
 
@@ -135,6 +138,9 @@ namespace MomoHTMLEditor {
                     // Finally, write (append) it to the file
                     writer.WriteLine(line);
                 }
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Licensing exclusion ends here
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 Console.WriteLine("Export complete.");
             }

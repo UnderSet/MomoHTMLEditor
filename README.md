@@ -1,6 +1,6 @@
 # MomoHTMLEditor
 
-A CLI tool to easily edit and create MomoTalk-style stuff using HTML quickly, based off of [**ManicMinic** on AO3](https://archiveofourown.org/users/ManicMinic)'s [**MomoTalk workskin template**](https://archiveofourown.org/works/64821349).
+A CLI tool to easily edit and create MomoTalk-style stuff using HTML quickly, based off of [**ManicMinic** on AO3](https://archiveofourown.org/users/ManicMinic)'s [**MomoTalk workskin template**](https://archiveofourown.org/works/64821349). (Used with permission.)
 
 **_Not_** a fully automated tool by any means. You should know how to edit HTML and basic CSS styling to edit on the output of this tool. Styling on messages is only included for convenience.
 
@@ -41,6 +41,13 @@ To build a singlefile binary like releases, run `dotnet publish -r <runtime ID>`
 - [**indisputablynobody**](https://github.com/indisputablynobody) for help testing the tool, feedback
 - [**MomoTalk Editor**](https://github.com/U1805/momotalk), [**ClosureTalk**](https://github.com/ClosureTalk/closure-talk) for inspiration
   - Note that _this_ tool has significantly different design philosophies and focus from those two
+
+## License
+[**MIT License**](LICENSE.txt), *except* for HTML structure in [Exporter.cs](/MomoHTMLEditor/Exporter.cs) (see Export method) as that is based off of ManicMinic's work, however you are still free to reuse that.
+
+See [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
+(I don't believe I have permission to relicense that under MIT, unfortunately. I'd like to so this is less confusing, though.)
 
 [^1]: Won't be relevant for much longer since Macs on Intel has reached end of the line with macOS 27 dropping support...
 
