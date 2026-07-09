@@ -77,7 +77,7 @@ namespace MomoHTMLEditor {
                 //   workskin as-is (or with minor edits to modify margin or something) on an AO3 fic
                 // Note if you're using my stylesheet: It sets Open Sans as the font to be more accurate to ingame, so you may want to - if you have the choice,
                 //   at least - embed the font from Google Fonts or something.
-                writer.WriteLine("<link rel=\"stylesheet\" href=\"https://underset.github.io/ogrerefresh/momotalk.css\" crossorigin=\"anonymous\">");
+                writer.WriteLine("<link rel=\"stylesheet\" href=\"https://underset.github.io/MomoHTMLEditorAssets/css/momotalk.css\" crossorigin=\"anonymous\">");
 
                 foreach (Message m in List) {
                     string line = ""; // VS will bitch at me if I don't set it to explicit empty string
